@@ -43,7 +43,7 @@ public class Menu extends JFrame{
         setContentPane(menu_panel);
 
         menuScroll.setViewportView(menuList);
-        menuScroll.setPreferredSize(new Dimension(1200, 1));
+        menuScroll.setPreferredSize(new Dimension(600, 1));
 
 
         menuListModel = new DefaultListModel<>();
