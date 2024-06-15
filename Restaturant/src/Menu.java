@@ -187,7 +187,6 @@ public class Menu extends JFrame{
                 String nama_menu = menu_tf.getText();
                 String deskripsi = deskripsi_tf.getText();
                 String hargaText = harga_tf.getText();
-                String gambar = gambar_tf.getText();
 
                 if (nama_menu.isEmpty()) {
                     JOptionPane.showMessageDialog(Menu.this, "Nama menu harus diisi");
@@ -209,7 +208,7 @@ public class Menu extends JFrame{
                     return;
                 }
                 try {
-                    int responseCode = addMenu(nama_menu, deskripsi, harga, gambar);
+                    int responseCode = addMenu(nama_menu, deskripsi, harga);
                     if (responseCode == 200) {
                         JOptionPane.showMessageDialog(Menu.this, "Menu added");
                         menuListModel.clear();
@@ -348,7 +347,7 @@ public class Menu extends JFrame{
         return Integer.parseInt(menuIDString);
     }
 
-    public int addMenu(String nama_menu, String deskripsi, int harga, String gambar) throws Exception {
+    public int addMenu(String nama_menu, String deskripsi, int harga) throws Exception {
         String url = "http://localhost:8000/menu";
 
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
@@ -356,7 +355,7 @@ public class Menu extends JFrame{
         conn.setRequestProperty("User-Agent", "Chrome/51.0.2704.103");
         conn.setRequestProperty("Content-Type", "application/json");
 
-        String newMenu = "{\"nama_menu\": \"" + nama_menu + "\", " + "\"deskripsi\": \"" + deskripsi + "\", " + "\"harga\": " + harga + ", " + "\"gambar\": \"" + gambar + "\"}";
+        String newMenu = "{\"nama_menu\": \"" + nama_menu + "\", " + "\"deskripsi\": \"" + deskripsi + "\", " + "\"harga\": " + harga + ", " + "\"gambar\": \"" + null + "\"}";
 
 
         // Mengirim data ke server

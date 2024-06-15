@@ -21,12 +21,12 @@ public class Order extends JFrame {
     private JButton main_bt;
     private JButton order_bt;
     private JButton menu_bt;
-    public JList<String> confirmList; // Updated: Added generic type String
+    public JList<String> confirmList;
     private JPanel list_panel;
     private JPanel button_panel;
     private JLabel konf_label;
     private JLabel dimasak_label;
-    private JComboBox<String> statusFilterComboBox; // Updated: Added generic type String
+    private JComboBox<String> statusFilterComboBox;
     private JLabel perjalan_label;
     private JLabel selesai_label;
     private JLabel total_order_label;
@@ -36,7 +36,7 @@ public class Order extends JFrame {
     private JButton selesai_btn;
     private JScrollPane orderScroll;
     private JLabel date_label;
-    public static DefaultListModel<String> confirmListModel; // Updated: Added generic type String
+    public static DefaultListModel<String> confirmListModel;
     private String lastSelectedOrder = null;
 
 
@@ -403,9 +403,9 @@ public class Order extends JFrame {
     }
 
     public int updateStatus(String status) throws Exception {
-        String selectedOrderInfo = confirmList.getSelectedValue(); // Mendapatkan item yang dipilih dari JList
-        int orderId = getOrderIDFromInfo(selectedOrderInfo); // Mendapatkan ID pesanan dari info yang dipilih
-        String url = "http://localhost:8000/order/" + orderId; // Menggunakan URL yang sesuai untuk mengubah status pesanan
+        String selectedOrderInfo = confirmList.getSelectedValue();
+        int orderId = getOrderIDFromInfo(selectedOrderInfo);
+        String url = "http://localhost:8000/order/" + orderId;
 
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestMethod("PUT");
