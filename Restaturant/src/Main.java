@@ -173,7 +173,6 @@ public class Main extends JFrame{
         JSONObject jsonObject = new JSONObject(response.toString());
         JSONArray responseArray = jsonObject.getJSONArray("response");
 
-        // Create a map to store orders grouped by order ID
         Map<Integer, StringBuilder> orderMap = new HashMap<>();
 
         //System.out.println(responseArray.length());
@@ -195,17 +194,13 @@ public class Main extends JFrame{
                 String menuId = keys.next();
                 int quantity = orderDetailJson.getInt(menuId);
 
-                // Get menu name by menuId
                 String nama_menu = Order.getMenuByID(menuId);
 
-                // Append order details to the StringBuilder
                 orderDetails.append(" ").append(nama_menu).append(": ").append(quantity).append(" \n");
             }
 
-            // Append the status at the end
             orderDetails.append(" Total: ").append(totalHarga).append("\n").append(" Alamat: ").append(alamatPengiriman).append("\n").append(" Status: ").append(orderStatus).append("\n");
 
-            // Add order details to the map
             orderMap.put(orderId, orderDetails);
 
 

@@ -270,7 +270,7 @@ public class Menu extends JFrame{
         int startIndex = data.indexOf(key) + key.length();
         int endIndex = data.indexOf('\n', startIndex);
 
-        if (endIndex == -1) { // if it's the last item and no newline at the end
+        if (endIndex == -1) {
             endIndex = data.length();
         }
 
@@ -278,9 +278,9 @@ public class Menu extends JFrame{
     }
 
     public int updateMenu(String nama_menu, String deskripsi, int harga) throws Exception {
-        String selectedMenuIndo = menuList.getSelectedValue(); // Mendapatkan item yang dipilih dari JList
-        int menuId = getMenuIDFromInfo(selectedMenuIndo); // Mendapatkan ID pesanan dari info yang dipilih
-        String url = "http://localhost:8000/menu/" + menuId; // Menggunakan URL yang sesuai untuk mengubah status pesanan
+        String selectedMenuIndo = menuList.getSelectedValue();
+        int menuId = getMenuIDFromInfo(selectedMenuIndo);
+        String url = "http://localhost:8000/menu/" + menuId;
 
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestMethod("PUT");
@@ -308,18 +308,16 @@ public class Menu extends JFrame{
             response.append(inputLine);
         }
         in.close();
-
-        // Menampilkan balasan dari server
         //System.out.println("Received data: \n" + response.toString());
 
         return responseCode;
     }
 
     public void deleteMenu() throws Exception {
-        String selectedOrderInfo = menuList.getSelectedValue(); // Mendapatkan item yang dipilih dari JList
+        String selectedOrderInfo = menuList.getSelectedValue();
         System.out.println("selecetedorder:"+selectedOrderInfo);
-        int menuId = getMenuIDFromInfo(selectedOrderInfo); // Mendapatkan ID pesanan dari info yang dipilih
-        String url = "http://localhost:8000/menu/" + menuId; // Menggunakan URL yang sesuai untuk menghapus pesanan
+        int menuId = getMenuIDFromInfo(selectedOrderInfo);
+        String url = "http://localhost:8000/menu/" + menuId;
 
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestMethod("DELETE");
@@ -339,20 +337,19 @@ public class Menu extends JFrame{
         }
         in.close();
 
-        // Menampilkan balasan dari server
         //System.out.println("Received data: \n" + response.toString());
     }
 
 
     public static int getMenuIDFromInfo(String orderInfo) {
-        int startIndex = orderInfo.indexOf("Menu ID:") + 8; // 8 is the length of "Menu ID:" plus one space
+        int startIndex = orderInfo.indexOf("Menu ID:") + 8;
         int endIndex = orderInfo.indexOf("\n", startIndex);
         String menuIDString = orderInfo.substring(startIndex, endIndex).trim();
         return Integer.parseInt(menuIDString);
     }
 
     public int addMenu(String nama_menu, String deskripsi, int harga, String gambar) throws Exception {
-        String url = "http://localhost:8000/menu"; // Menggunakan URL yang sesuai untuk mengubah status pesanan
+        String url = "http://localhost:8000/menu";
 
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestMethod("POST");
@@ -380,7 +377,6 @@ public class Menu extends JFrame{
         }
         in.close();
 
-        // Menampilkan balasan dari server
         //System.out.println("Received data: \n" + response.toString());
         return responseCode;
     }

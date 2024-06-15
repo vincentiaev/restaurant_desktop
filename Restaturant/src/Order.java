@@ -70,7 +70,7 @@ public class Order extends JFrame {
                         String selectedOrder = confirmListModel.getElementAt(index);
                         //System.out.println(selectedOrder);
                         if (selectedOrder.equals(lastSelectedOrder)) {
-                            confirmList.clearSelection(); // Unselect if the same item is clicked again
+                            confirmList.clearSelection();
                             lastSelectedOrder = null;
                             orderDetailText.setText("");
                         } else {
@@ -126,7 +126,6 @@ public class Order extends JFrame {
                         throw new RuntimeException(ex);
                     }
                 }
-                // Optionally, add code to filter orders based on the selected status
             }
         });
         dimasak_btn.addActionListener(new ActionListener() {
@@ -246,7 +245,6 @@ public class Order extends JFrame {
         JSONObject jsonObject = new JSONObject(response.toString());
         JSONArray responseArray = jsonObject.getJSONArray("response");
 
-        // Create a map to store orders grouped by order ID
         Map<Integer, StringBuilder> orderMap = new HashMap<>();
 
         //System.out.println(responseArray.length());
@@ -268,23 +266,17 @@ public class Order extends JFrame {
                 String menuId = keys.next();
                 int quantity = orderDetailJson.getInt(menuId);
 
-                // Get menu name by menuId
                 String nama_menu = getMenuByID(menuId);
 
-                // Append order details to the StringBuilder
                 orderDetails.append(" ").append(nama_menu).append(": ").append(quantity).append(" \n");
             }
 
-            // Append the status at the end
             orderDetails.append(" Total: ").append(totalHarga).append("\n").append(" Alamat: ").append(alamatPengiriman).append("\n").append(" Status: ").append(orderStatus).append("\n");
-
-            // Add order details to the map
             orderMap.put(orderId, orderDetails);
 
 
         }
 
-        // Add order details from the map to the list model
         for (int orderId : orderMap.keySet()) {
             StringBuilder orderDetails = orderMap.get(orderId);
             String orderInfo = " Order ID: " + orderId + "\n" + orderDetails.toString();
@@ -321,13 +313,11 @@ public class Order extends JFrame {
         JSONObject jsonObject = new JSONObject(response.toString());
         JSONArray responseArray = jsonObject.getJSONArray("response");
 
-        // Counters for each status
         int konfCount = 0;
         int dimasakCount = 0;
         int perjalanCount = 0;
         int selesaiCount = 0;
 
-        // Create a map to store orders grouped by order ID
         Map<Integer, StringBuilder> orderMap = new HashMap<>();
 
         total_order_label.setText(String.valueOf(responseArray.length()));
@@ -341,7 +331,6 @@ public class Order extends JFrame {
             String alamatPengiriman = order.getString("alamat_pengiriman");
             int totalHarga = order.getInt("total_harga");
 
-            // Update the count based on the status
             switch (orderStatus) {
                 case "Menunggu konfirmasi":
                     konfCount++;
@@ -357,7 +346,6 @@ public class Order extends JFrame {
                     break;
             }
 
-            // Parsing order_detail
             JSONObject orderDetailJson = new JSONObject(orderDetail);
             Iterator<String> keys = orderDetailJson.keys();
             StringBuilder orderDetails = new StringBuilder();
@@ -366,17 +354,13 @@ public class Order extends JFrame {
                 String menuId = keys.next();
                 int quantity = orderDetailJson.getInt(menuId);
 
-                // Get menu name by menuId
                 String nama_menu = getMenuByID(menuId);
 
-                // Append order details to the StringBuilder
                 orderDetails.append(" ").append(nama_menu).append(": ").append(quantity).append(" \n");
             }
 
-            // Append the status at the end
             orderDetails.append(" Total: ").append(totalHarga).append("\n").append(" Alamat: ").append(alamatPengiriman).append("\n").append(" Status: ").append(orderStatus).append("\n");
 
-            // Add order details to the map
             orderMap.put(orderId, orderDetails);
 
 
@@ -387,7 +371,6 @@ public class Order extends JFrame {
         perjalan_label.setText(String.valueOf(perjalanCount));
         selesai_label.setText(String.valueOf(selesaiCount));
 
-        // Add order details from the map to the list model
         for (int orderId : orderMap.keySet()) {
             StringBuilder orderDetails = orderMap.get(orderId);
             String orderInfo = " Order ID: " + orderId + " \n" + orderDetails.toString();
@@ -431,7 +414,6 @@ public class Order extends JFrame {
 
         String newStatus = "{\"status\": \"" + status + "\"}";
 
-        // Mengirim data ke server
         conn.setDoOutput(true);
         OutputStream os = conn.getOutputStream();
         os.write(newStatus.getBytes());
@@ -451,13 +433,11 @@ public class Order extends JFrame {
         }
         in.close();
 
-        // Menampilkan balasan dari server
         //System.out.println("Received data: \n" + response.toString());
         return responseCode;
     }
 
     public static int getOrderIDFromInfo(String orderInfo) {
-        // Assumption: Order ID is located before "Order ID:" string
         int startIndex = orderInfo.indexOf("Order ID:") + 9;
         int endIndex = orderInfo.indexOf("\n", startIndex);
         String orderIdString = orderInfo.substring(startIndex, endIndex);
