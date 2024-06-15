@@ -340,10 +340,10 @@ public class Menu extends JFrame{
     }
 
 
-    public static int getMenuIDFromInfo(String orderInfo) {
-        int startIndex = orderInfo.indexOf("Menu ID:") + 8;
-        int endIndex = orderInfo.indexOf("\n", startIndex);
-        String menuIDString = orderInfo.substring(startIndex, endIndex).trim();
+    public static int getMenuIDFromInfo(String menuInfo) {
+        int startIndex = menuInfo.indexOf("Menu ID:") + 8;
+        int endIndex = menuInfo.indexOf("\n", startIndex);
+        String menuIDString = menuInfo.substring(startIndex, endIndex).trim();
         return Integer.parseInt(menuIDString);
     }
 
