@@ -367,7 +367,6 @@ public class Menu extends JFrame{
         os.close();
 
         int responseCode = conn.getResponseCode();
-
         BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         String inputLine;
         StringBuffer response = new StringBuffer();
