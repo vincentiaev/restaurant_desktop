@@ -32,7 +32,7 @@ public class Menu extends JFrame{
     private JScrollPane menuScroll;
     public static DefaultListModel<String> menuListModel;
 
-    private String lastSelectedMenu = null; // Variable to keep track of the last selected item
+    private String lastSelectedMenu = null;
 
     public Menu(){
         setTitle("Menu");
@@ -43,7 +43,7 @@ public class Menu extends JFrame{
         setContentPane(menu_panel);
 
         menuScroll.setViewportView(menuList);
-        menuScroll.setPreferredSize(new Dimension(1200, 1));  // Sesuaikan dengan ukuran yang Anda inginkan
+        menuScroll.setPreferredSize(new Dimension(1200, 1));
 
 
         menuListModel = new DefaultListModel<>();
@@ -81,7 +81,7 @@ public class Menu extends JFrame{
                         String selectedMenu = menuListModel.getElementAt(index);
                         //System.out.println(selectedMenu);
                         if (selectedMenu.equals(lastSelectedMenu)) {
-                            menuList.clearSelection(); // Unselect if the same item is clicked again
+                            menuList.clearSelection();
                             lastSelectedMenu = null;
                             menu_tf.setText("");
                             deskripsi_tf.setText("");
