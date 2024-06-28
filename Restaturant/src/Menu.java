@@ -1,21 +1,21 @@
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Objects;
 
-public class Menu extends JFrame{
+public class Menu extends JFrame {
     private JButton main_bt;
     private JButton order_bt;
     private JButton menu_bt;
@@ -30,11 +30,13 @@ public class Menu extends JFrame{
     private JButton addButton;
     private JButton browseButton;
     private JScrollPane menuScroll;
+    private JLabel gambarView;
+    private JTextField textField1;
     public static DefaultListModel<String> menuListModel;
 
     private String lastSelectedMenu = null;
 
-    public Menu(){
+    public Menu() {
         setTitle("Menu");
         setExtendedState(MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -42,9 +44,10 @@ public class Menu extends JFrame{
         setVisible(true);
         setContentPane(menu_panel);
 
+        gambarView.setPreferredSize(new Dimension(200, 100)); // Set preferred size as needed
+
         menuScroll.setViewportView(menuList);
         menuScroll.setPreferredSize(new Dimension(600, 1));
-
 
         menuListModel = new DefaultListModel<>();
         menuList.setModel(menuListModel);
@@ -79,28 +82,56 @@ public class Menu extends JFrame{
                     int index = menuList.locationToIndex(e.getPoint());
                     if (index >= 0) {
                         String selectedMenu = menuListModel.getElementAt(index);
-                        //System.out.println(selectedMenu);
                         if (selectedMenu.equals(lastSelectedMenu)) {
                             menuList.clearSelection();
                             lastSelectedMenu = null;
                             menu_tf.setText("");
                             deskripsi_tf.setText("");
                             harga_tf.setText("");
+                            gambarView.setIcon(null);
                         } else {
                             lastSelectedMenu = selectedMenu;
 
                             String nama_menu = extractData(selectedMenu, "Nama Menu: ");
                             String deskripsi = extractData(selectedMenu, "Deskripsi: ");
                             String harga = extractData(selectedMenu, "Harga: ");
+                            String gambar = extractData(selectedMenu, "Gambar: ");
 
                             menu_tf.setText(nama_menu);
                             deskripsi_tf.setText(deskripsi);
                             harga_tf.setText(harga);
+
+                            if (!gambar.isEmpty()) {
+                                String imageUrl = "http://localhost:8000/" + gambar;
+                                System.out.println(imageUrl);
+                                try {
+                                    URL url = new URL(imageUrl);
+                                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                                    conn.setRequestMethod("GET");
+                                    conn.setRequestProperty("User-Agent", "Chrome/51.0.2704.103");
+
+                                    int responseCode = conn.getResponseCode();
+                                    if (responseCode == 200) {
+                                        BufferedImage originalImage = ImageIO.read(conn.getInputStream());
+                                        Image scaledImage = originalImage.getScaledInstance(gambarView.getPreferredSize().width, gambarView.getPreferredSize().height, Image.SCALE_SMOOTH);
+                                        ImageIcon imageIcon = new ImageIcon(scaledImage);
+                                        gambarView.setIcon(imageIcon);
+                                    } else {
+                                        gambarView.setIcon(null);
+                                    }
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                    gambarView.setIcon(null);
+                                }
+                            } else {
+                                gambarView.setIcon(null);
+                            }
                         }
                     }
                 }
             }
         });
+
         updateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -141,7 +172,7 @@ public class Menu extends JFrame{
             public void actionPerformed(ActionEvent e) {
 
                 if (lastSelectedMenu == null) {
-                    JOptionPane.showMessageDialog(Menu.this, "Please select a nemu");
+                    JOptionPane.showMessageDialog(Menu.this, "Please select a menu");
                 } else {
                     JPanel panel = new JPanel();
 
@@ -156,7 +187,7 @@ public class Menu extends JFrame{
 
                     int res = JOptionPane.showConfirmDialog(null, panel, "Delete menu",
                             JOptionPane.YES_NO_OPTION);
-                    if(res == 0) {
+                    if (res == 0) {
                         System.out.println("Pressed YES");
                         try {
                             JOptionPane.showMessageDialog(Menu.this, "Menu deleted");
@@ -175,8 +206,6 @@ public class Menu extends JFrame{
                         //System.out.println("Pressed CANCEL");
                     }
                 }
-
-
             }
         });
 
@@ -259,8 +288,9 @@ public class Menu extends JFrame{
             String nama_menu = menu.getString("nama_menu");
             String deskripsi = menu.getString("deskripsi");
             int harga = menu.getInt("harga");
+            String gambar = menu.getString("gambar");
 
-            String menuInfo = "Menu ID: " + menuId + " \nNama Menu: " + nama_menu + " \nDeskripsi: " + deskripsi + " \nHarga: " + harga;
+            String menuInfo = "Menu ID: " + menuId + " \nNama Menu: " + nama_menu + " \nDeskripsi: " + deskripsi + " \nHarga: " + harga + " \nGambar: " + gambar;
             menuListModel.addElement(menuInfo);
         }
     }
@@ -314,7 +344,7 @@ public class Menu extends JFrame{
 
     public void deleteMenu() throws Exception {
         String selectedOrderInfo = menuList.getSelectedValue();
-        System.out.println("selecetedorder:"+selectedOrderInfo);
+        System.out.println("selecetedorder:" + selectedOrderInfo);
         int menuId = getMenuIDFromInfo(selectedOrderInfo);
         String url = "http://localhost:8000/menu/" + menuId;
 
@@ -339,7 +369,6 @@ public class Menu extends JFrame{
         //System.out.println("Received data: \n" + response.toString());
     }
 
-
     public static int getMenuIDFromInfo(String menuInfo) {
         int startIndex = menuInfo.indexOf("Menu ID:") + 8;
         int endIndex = menuInfo.indexOf("\n", startIndex);
@@ -356,7 +385,6 @@ public class Menu extends JFrame{
         conn.setRequestProperty("Content-Type", "application/json");
 
         String newMenu = "{\"nama_menu\": \"" + nama_menu + "\", " + "\"deskripsi\": \"" + deskripsi + "\", " + "\"harga\": " + harga + ", " + "\"gambar\": \"" + null + "\"}";
-
 
         // Mengirim data ke server
         conn.setDoOutput(true);
