@@ -9,11 +9,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 
 public class Menu extends JFrame {
     private JButton main_bt;
@@ -31,7 +30,7 @@ public class Menu extends JFrame {
     private JButton browseButton;
     private JScrollPane menuScroll;
     private JLabel gambarView;
-    private JTextField textField1;
+    private JTextField fileName;
     public static DefaultListModel<String> menuListModel;
 
     private String lastSelectedMenu = null;
@@ -88,6 +87,7 @@ public class Menu extends JFrame {
                             menu_tf.setText("");
                             deskripsi_tf.setText("");
                             harga_tf.setText("");
+                            fileName.setText("");
                             gambarView.setIcon(null);
                         } else {
                             lastSelectedMenu = selectedMenu;
@@ -142,13 +142,16 @@ public class Menu extends JFrame {
                     String nama_menu = menu_tf.getText();
                     String deskripsi = deskripsi_tf.getText();
                     int harga = Integer.parseInt(harga_tf.getText());
+                    String nama_file = fileName.getText();
+                    File gambarFile = null;
+                    boolean isGambarUpdated = !nama_file.isEmpty();
 
-                    System.out.println("Nama Menu: " + nama_menu);
-                    System.out.println("Deskripsi: " + deskripsi);
-                    System.out.println("Harga: " + harga);
+                    if (isGambarUpdated) {
+                        gambarFile = new File(nama_file);
+                    }
 
                     try {
-                        int responseCode = updateMenu(nama_menu, deskripsi, harga);
+                        int responseCode = updateMenu(nama_menu, deskripsi, harga, gambarFile, isGambarUpdated);
                         System.out.println(responseCode);
                         if (responseCode == 200) {
                             JOptionPane.showMessageDialog(Menu.this, "Menu updated");
@@ -157,6 +160,8 @@ public class Menu extends JFrame {
                             menu_tf.setText("");
                             deskripsi_tf.setText("");
                             harga_tf.setText("");
+                            fileName.setText("");
+                            gambarView.setIcon(null);
                         } else {
                             JOptionPane.showMessageDialog(Menu.this, "Update failed");
                         }
@@ -164,9 +169,9 @@ public class Menu extends JFrame {
                         throw new RuntimeException(ex);
                     }
                 }
-
             }
         });
+
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -197,6 +202,8 @@ public class Menu extends JFrame {
                             menu_tf.setText("");
                             deskripsi_tf.setText("");
                             harga_tf.setText("");
+                            fileName.setText("");
+                            gambarView.setIcon(null);
                         } catch (Exception ex) {
                             throw new RuntimeException(ex);
                         }
@@ -212,10 +219,10 @@ public class Menu extends JFrame {
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
                 String nama_menu = menu_tf.getText();
                 String deskripsi = deskripsi_tf.getText();
                 String hargaText = harga_tf.getText();
+                String nama_file = fileName.getText();
 
                 if (nama_menu.isEmpty()) {
                     JOptionPane.showMessageDialog(Menu.this, "Nama menu harus diisi");
@@ -229,6 +236,10 @@ public class Menu extends JFrame {
                     JOptionPane.showMessageDialog(Menu.this, "Harga harus diisi");
                     return;
                 }
+                if (nama_file.isEmpty()) {
+                    JOptionPane.showMessageDialog(Menu.this, "Gambar harus diisi");
+                    return;
+                }
                 int harga;
                 try {
                     harga = Integer.parseInt(hargaText);
@@ -237,7 +248,7 @@ public class Menu extends JFrame {
                     return;
                 }
                 try {
-                    int responseCode = addMenu(nama_menu, deskripsi, harga);
+                    int responseCode = addMenu(nama_menu, deskripsi, harga, new File(nama_file));
                     if (responseCode == 200) {
                         JOptionPane.showMessageDialog(Menu.this, "Menu added");
                         menuListModel.clear();
@@ -245,6 +256,7 @@ public class Menu extends JFrame {
                         menu_tf.setText("");
                         deskripsi_tf.setText("");
                         harga_tf.setText("");
+                        fileName.setText("");
                     } else {
                         JOptionPane.showMessageDialog(Menu.this, "Add menu failed");
                     }
@@ -254,6 +266,17 @@ public class Menu extends JFrame {
             }
         });
 
+        browseButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                int result = fileChooser.showOpenDialog(Menu.this);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    fileName.setText(selectedFile.getAbsolutePath());
+                }
+            }
+        });
     }
 
     public void getAllMenu() throws Exception {
@@ -306,29 +329,61 @@ public class Menu extends JFrame {
         return data.substring(startIndex, endIndex).trim();
     }
 
-    public int updateMenu(String nama_menu, String deskripsi, int harga) throws Exception {
-        String selectedMenuIndo = menuList.getSelectedValue();
-        int menuId = getMenuIDFromInfo(selectedMenuIndo);
+    public int updateMenu(String nama_menu, String deskripsi, int harga, File gambar, boolean isGambarUpdated) throws Exception {
+        String selectedMenuInfo = menuList.getSelectedValue();
+        int menuId = getMenuIDFromInfo(selectedMenuInfo);
         String url = "http://localhost:8000/menu/" + menuId;
 
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestMethod("PUT");
         conn.setRequestProperty("User-Agent", "Chrome/51.0.2704.103");
-        conn.setRequestProperty("Content-Type", "application/json");
-
-        String editedMenu = "{\"nama_menu\": \"" + nama_menu + "\", " + "\"deskripsi\": \"" + deskripsi + "\", " + "\"harga\": " + harga + "}";
-
-        // Mengirim data ke server
         conn.setDoOutput(true);
-        OutputStream os = conn.getOutputStream();
-        os.write(editedMenu.getBytes());
-        os.flush();
-        os.close();
+
+        // Boundary for multipart/form-data request
+        String boundary = Long.toHexString(System.currentTimeMillis());
+        conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+        try (OutputStream output = conn.getOutputStream();
+             PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, "UTF-8"), true)) {
+
+            // Send text fields
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"nama_menu\"").append("\r\n");
+            writer.append("Content-Type: text/plain; charset=UTF-8").append("\r\n\r\n");
+            writer.append(nama_menu).append("\r\n").flush();
+
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"deskripsi\"").append("\r\n");
+            writer.append("Content-Type: text/plain; charset=UTF-8").append("\r\n\r\n");
+            writer.append(deskripsi).append("\r\n").flush();
+
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"harga\"").append("\r\n");
+            writer.append("Content-Type: text/plain; charset=UTF-8").append("\r\n\r\n");
+            writer.append(Integer.toString(harga)).append("\r\n").flush();
+
+            // Send binary file if a new image is provided
+            if (isGambarUpdated && gambar != null) {
+                writer.append("--" + boundary).append("\r\n");
+                writer.append("Content-Disposition: form-data; name=\"gambar\"; filename=\"" + gambar.getName() + "\"").append("\r\n");
+                writer.append("Content-Type: " + URLConnection.guessContentTypeFromName(gambar.getName())).append("\r\n");
+                writer.append("Content-Transfer-Encoding: binary").append("\r\n\r\n").flush();
+
+                try (InputStream input = new FileInputStream(gambar)) {
+                    byte[] buffer = new byte[1024];
+                    for (int length; (length = input.read(buffer)) > 0; ) {
+                        output.write(buffer, 0, length);
+                    }
+                    output.flush();
+                }
+
+                writer.append("\r\n").flush();
+            }
+
+            writer.append("--" + boundary + "--").append("\r\n").flush();
+        }
 
         int responseCode = conn.getResponseCode();
-        //System.out.println("Send PUT request: " + url);
-        //System.out.println("Response code: " + responseCode);
-
         BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         String inputLine;
         StringBuffer response = new StringBuffer();
@@ -337,10 +392,11 @@ public class Menu extends JFrame {
             response.append(inputLine);
         }
         in.close();
-        //System.out.println("Received data: \n" + response.toString());
 
         return responseCode;
     }
+
+
 
     public void deleteMenu() throws Exception {
         String selectedOrderInfo = menuList.getSelectedValue();
@@ -376,22 +432,53 @@ public class Menu extends JFrame {
         return Integer.parseInt(menuIDString);
     }
 
-    public int addMenu(String nama_menu, String deskripsi, int harga) throws Exception {
+    public int addMenu(String nama_menu, String deskripsi, int harga, File gambar) throws Exception {
         String url = "http://localhost:8000/menu";
-
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestMethod("POST");
         conn.setRequestProperty("User-Agent", "Chrome/51.0.2704.103");
-        conn.setRequestProperty("Content-Type", "application/json");
-
-        String newMenu = "{\"nama_menu\": \"" + nama_menu + "\", " + "\"deskripsi\": \"" + deskripsi + "\", " + "\"harga\": " + harga + ", " + "\"gambar\": \"" + null + "\"}";
-
-        // Mengirim data ke server
         conn.setDoOutput(true);
-        OutputStream os = conn.getOutputStream();
-        os.write(newMenu.getBytes());
-        os.flush();
-        os.close();
+
+        // Boundary for multipart/form-data request
+        String boundary = Long.toHexString(System.currentTimeMillis());
+        conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+        try (OutputStream output = conn.getOutputStream();
+             PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, "UTF-8"), true)) {
+
+            // Send text fields
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"nama_menu\"").append("\r\n");
+            writer.append("Content-Type: text/plain; charset=UTF-8").append("\r\n\r\n");
+            writer.append(nama_menu).append("\r\n").flush();
+
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"deskripsi\"").append("\r\n");
+            writer.append("Content-Type: text/plain; charset=UTF-8").append("\r\n\r\n");
+            writer.append(deskripsi).append("\r\n").flush();
+
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"harga\"").append("\r\n");
+            writer.append("Content-Type: text/plain; charset=UTF-8").append("\r\n\r\n");
+            writer.append(Integer.toString(harga)).append("\r\n").flush();
+
+            // Send binary file
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"gambar\"; filename=\"" + gambar.getName() + "\"").append("\r\n");
+            writer.append("Content-Type: " + URLConnection.guessContentTypeFromName(gambar.getName())).append("\r\n");
+            writer.append("Content-Transfer-Encoding: binary").append("\r\n\r\n").flush();
+
+            try (InputStream input = new FileInputStream(gambar)) {
+                byte[] buffer = new byte[1024];
+                for (int length; (length = input.read(buffer)) > 0; ) {
+                    output.write(buffer, 0, length);
+                }
+                output.flush();
+            }
+
+            writer.append("\r\n").flush();
+            writer.append("--" + boundary + "--").append("\r\n").flush();
+        }
 
         int responseCode = conn.getResponseCode();
         BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -403,7 +490,6 @@ public class Menu extends JFrame {
         }
         in.close();
 
-        //System.out.println("Received data: \n" + response.toString());
         return responseCode;
     }
 
